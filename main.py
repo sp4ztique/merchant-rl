@@ -3,7 +3,8 @@
 import libtcodpy as libtcod
 import sys
 
-import app, globalconst
+import app, maps
+from globalconst import *
 
 # Start the game
 if __name__ == "__main__":

@@ -1,18 +1,28 @@
 import libtcodpy as libtcod
 import sys
 
+import entity, maps
+
 from globalconst import *
 
 class App:
 	def __init__(self):
 		self.running  = True
 		self.size     = self.width, self.height = SCREEN_WIDTH, SCREEN_HEIGHT
+		self.con = None
+		self.entities = []
 
 	def on_init(self):
 		# libtcod intialisation
 		libtcod.console_set_custom_font("terminal12x12_gs_ro.png", libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
 		libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, "merchant-rl", False)
 		libtcod.sys_set_fps(LIMIT_FPS)
+		self.con = libtcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
+
+		test = entity.Entity(10, 10, '@', libtcod.white)
+		self.entities.append(test)
+
+		self.map = maps.Map(self)
 
 		self.running = True		
 
@@ -37,11 +47,14 @@ class App:
 	
 	def on_render(self, flag):
 		if flag == "clear":
-			pass
+			for entity in self.entities:
+				entity.clear(self.con)
 		elif flag == "draw":
-				libtcod.console_set_default_foreground(0, libtcod.white)
-				libtcod.console_put_char(0, 1, 1, '@', libtcod.BKGND_NONE)
-				libtcod.console_flush()
+			self.map.draw(self.con)
+			for entity in self.entities:
+				entity.draw(self.con)
+			libtcod.console_blit(self.con, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
+			libtcod.console_flush()
 		else:
 			print "Invalid flag passed to App.on_render: " + flag
 			running = False
