@@ -38,6 +38,8 @@ class App:
 		if ev == libtcod.EVENT_MOUSE_PRESS:
 			x = mouse.cx
 			y = mouse.cy
+			normal = libtcod.heightmap_get_normal(self.map.heightmap, x*2, y*2, 0)
+			print normal
 
 	def on_loop(self):
 		self.on_event()

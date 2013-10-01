@@ -74,8 +74,20 @@ class Map:
 					libtcod.image_put_pixel(self.image, x, y, land_colormap[index])
 					libtcod.heightmap_set_value(self.heightmap, x, y, value)
 
-		#print "-- apply normal shadows"
-
+		print "-- apply normal shadows"
+		for x in range(self.width*2):
+			for y in range(self.height*2):
+				normal = libtcod.heightmap_get_normal(self.heightmap, x, y, -1)
+				nx = normal[0]
+				ny = normal[1]
+				avg = (nx + ny)/2
+				if avg > 0:
+					avg = 1
+				else:
+					avg = avg + 1
+					avg = avg/2 + 0.5
+				col = libtcod.image_get_pixel(self.image, x, y) * avg
+				libtcod.image_put_pixel(self.image, x, y, col)
 
 		print "Map generated"
 
