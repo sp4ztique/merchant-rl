@@ -19,9 +19,6 @@ class App:
 		libtcod.sys_set_fps(LIMIT_FPS)
 		self.con = libtcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
 
-		test = entity.Entity(10, 10, '@', libtcod.white)
-		self.entities.append(test)
-
 		self.map = maps.Map(self)
 
 		self.running = True		
@@ -35,6 +32,8 @@ class App:
 				self.running = False
 			elif key.vk == libtcod.KEY_CHAR:
 				keychar = chr(key.c)
+				if keychar == "g" or keychar == "G":
+					self.map.generate()
 
 		if ev == libtcod.EVENT_MOUSE_PRESS:
 			x = mouse.cx
