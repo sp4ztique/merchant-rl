@@ -17,13 +17,13 @@ class Map:
 			self.generate()
 
 	def generate(self):
-		print "Generating map..."
+		self.owner.log.message("Generating map...", debug = True)
 		noise = libtcod.noise_new(2, 0.5, 2.0)
 		heightmap = libtcod.heightmap_new(2*self.width, 2*self.height)
 		maxi = 0
 		mini = 0
 
-		print "-- heightmap..."
+		self.owner.log.message("-- heightmap...", debug = True)
 		for x in range(self.width*2):
 			for y in range(self.height*2):
 				f = [3 * float(x) / (2*self.width), 3 * float(y) / (2*self.height)]
@@ -55,7 +55,7 @@ class Map:
 		land_cols = [watersedge, sand, grass, foothill, mountaintop]
 		land_colormap = libtcod.color_gen_map(land_cols, land_idx)
 
-		print "-- paint the image and normalize the heights..."
+		self.owner.log.message("-- paint the image and normalize the heights...", debug = True)
 		self.heightmap = libtcod.heightmap_new(self.width*2, self.height*2)
 
 		for x in range(self.width*2):
@@ -74,10 +74,10 @@ class Map:
 					libtcod.image_put_pixel(self.image, x, y, land_colormap[index])
 					libtcod.heightmap_set_value(self.heightmap, x, y, value)
 
-		print "-- apply normal shadows"
+		self.owner.log.message("-- apply normal shadows", debug = True)
 		for x in range(self.width*2):
 			for y in range(self.height*2):
-				normal = libtcod.heightmap_get_normal(self.heightmap, x, y, -1)
+				normal = libtcod.heightmap_get_normal(self.heightmap, x, y, 0)
 				nx = normal[0]
 				ny = normal[1]
 				avg = (nx + ny)/2
@@ -89,7 +89,7 @@ class Map:
 				col = libtcod.image_get_pixel(self.image, x, y) * avg
 				libtcod.image_put_pixel(self.image, x, y, col)
 
-		print "Map generated"
+		self.owner.log.message("Map generated", debug = True)
 
 	def draw(self, con):
 		libtcod.image_blit_2x(self.image, con, 0, 0)
