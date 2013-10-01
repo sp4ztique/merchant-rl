@@ -1,7 +1,7 @@
 import libtcodpy as libtcod
 import sys
 
-import entity, maps
+import entity, maps, log
 
 from globalconst import *
 
@@ -14,10 +14,19 @@ class App:
 
 	def on_init(self):
 		# libtcod intialisation
-		libtcod.console_set_custom_font("terminal12x12_gs_ro.png", libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
+		libtcod.console_set_custom_font("terminal8x8_aa_ro.png", libtcod.FONT_LAYOUT_ASCII_INROW)
 		libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, "merchant-rl", False)
 		libtcod.sys_set_fps(LIMIT_FPS)
-		self.con = libtcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
+
+		self.main_panel = libtcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
+		self.bottom_panel = libtcod.console_new(self.width, BOTTOM_PANEL_HEIGHT)
+
+		self.log = log.Log(self)
+
+		print ""
+		print "Merchant-rl -- pre-alpha -- v0.0"
+		print "Made by sp4ztique"
+		print ""
 
 		self.map = maps.Map(self)
 
@@ -49,12 +58,17 @@ class App:
 	def on_render(self, flag):
 		if flag == "clear":
 			for entity in self.entities:
-				entity.clear(self.con)
+				entity.clear(self.main_panel)
 		elif flag == "draw":
-			self.map.draw(self.con)
+			self.map.draw(self.main_panel)
+
 			for entity in self.entities:
-				entity.draw(self.con)
-			libtcod.console_blit(self.con, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
+				entity.draw(self.main_panel)
+
+			self.log.draw(self.bottom_panel)
+
+			libtcod.console_blit(self.main_panel, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
+			libtcod.console_blit(self.bottom_panel, 0, 0, self.width, BOTTOM_PANEL_HEIGHT, 0, 0, MAP_HEIGHT)
 			libtcod.console_flush()
 		else:
 			print "Invalid flag passed to App.on_render: " + flag
