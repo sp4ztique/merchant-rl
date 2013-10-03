@@ -6,6 +6,9 @@ class Tile(object):
 	def __init__(self, terrain = "land"):
 		self.terrain = terrain
 		self.owned_by = None
+		self.char = None
+		self.fg_color = None
+		self.info = "No info available"
 
 class Map(object):
 	def __init__(self, owner, width = MAP_WIDTH, height = MAP_HEIGHT, gen = True):
@@ -107,6 +110,19 @@ class Map(object):
 					self.tiles[x][y].terrain = "land"
 				else:
 					self.tiles[x][y].terrain = "water"
+
+		self.owner.log.message("-- placing forests", debug = True)
+		noise2 = libtcod.noise_new(2, 0.5, 2.0)
+		for x in range(self.width):
+			for y in range(self.height):
+				f = [3 * float(x) / (self.width), 3 * float(y) / (self.height)]
+				value = (libtcod.noise_get_fbm(noise2, f, 5, libtcod.NOISE_PERLIN))/2
+				if value > 0:
+					h = libtcod.heightmap_get_value(self.heightmap, x*2, y*2)
+					if h > 0.05:
+						self.tiles[x][y].char = libtcod.random_get_int(0, 5, 6)
+						self.tiles[x][y].info = "Forest"
+						self.tiles[x][y].fg_color = libtcod.yellow					
 		self.owner.log.message("Terrain complete", debug = True)
 
 		self.owner.log.message("Placing cities", debug=True)
@@ -130,6 +146,12 @@ class Map(object):
 	def draw(self, con, mode):
 		if mode == "normal":
 			libtcod.image_blit_2x(self.image, con, 0, 0)
+			for x in range(self.width):
+				for y in range(self.height):
+					tile = self.tiles[x][y]
+					if tile.char is not None:
+						libtcod.console_set_default_foreground(con, tile.fg_color)
+						libtcod.console_put_char(con, x, y, tile.char, libtcod.BKGND_NONE)
 		elif mode == "tiles":
 			for x in range(self.width):
 				for y in range(self.height):
