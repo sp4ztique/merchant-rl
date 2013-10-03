@@ -27,7 +27,7 @@ class Map:
 		for x in range(self.width*2):
 			for y in range(self.height*2):
 				f = [3 * float(x) / (2*self.width), 3 * float(y) / (2*self.height)]
-				value = (libtcod.noise_get_fbm(noise, f, 4, libtcod.NOISE_PERLIN))/2
+				value = (libtcod.noise_get_fbm(noise, f, 5, libtcod.NOISE_PERLIN))/2
 				if value > maxi:
 					maxi = value
 				if value < mini:
@@ -35,13 +35,13 @@ class Map:
 				libtcod.heightmap_set_value(heightmap, x, y, value)
 
 		# print "-- erode the map"
-		# libtcod.heightmap_rain_erosion(heightmap, self.width*2*self.height*2*2,0.1,0.3)
+		# libtcod.heightmap_rain_erosion(heightmap, self.width*2*self.height*2*2,0.1,0.2)
 
 		deep = libtcod.Color(1, 10, 27)
 		mid = libtcod.Color(38, 50, 60)
 		shallow = libtcod.Color(51, 83, 120)
-		water_idx = [0, 190, 255]
-		water_cols = [deep, mid, shallow]
+		water_idx = [0, 70, 210, 255]
+		water_cols = [deep, deep, mid, shallow]
 		water_colormap = libtcod.color_gen_map(water_cols, water_idx)
 
 
@@ -85,8 +85,8 @@ class Map:
 					avg = 1
 				else:
 					avg = avg + 1
-					avg = avg/2 + 0.5
-				col = libtcod.image_get_pixel(self.image, x, y) * avg
+					avg = min(avg/2 + 0.5, 1)
+				col = libtcod.image_get_pixel(self.image, x, y) * avg 
 				libtcod.image_put_pixel(self.image, x, y, col)
 
 		self.owner.log.message("Map generated", debug = True)
