@@ -1,5 +1,6 @@
 from globalconst import *
 import libtcodpy as libtcod
+import entity
 
 class Map:
 	def __init__(self, owner, width = MAP_WIDTH, height = MAP_HEIGHT, gen = True):
@@ -88,6 +89,23 @@ class Map:
 					avg = min(avg/2 + 0.5, 1)
 				col = libtcod.image_get_pixel(self.image, x, y) * avg 
 				libtcod.image_put_pixel(self.image, x, y, col)
+
+
+		self.owner.log.message("Placing cities", debug=True)
+
+		self.owner.entities = []
+
+		max_cities = 10
+		num_cities = 0
+		for i in range(max_cities):
+			x = libtcod.random_get_int(0, 0, self.width)
+			y = libtcod.random_get_int(0, 0, self.height)
+			height = libtcod.heightmap_get_value(self.heightmap, x*2, y*2)
+			if height > 0.1:
+				city = entity.Entity(self.owner, x, y, '#', libtcod.Color(libtcod.random_get_int(0, 0, 255), libtcod.random_get_int(0, 0, 255), libtcod.random_get_int(0, 0, 255)))
+				self.owner.entities.append(city)
+				num_cities += 1
+		self.owner.log.message("-- placed " + str(num_cities) + " cities")
 
 		self.owner.log.message("Map generated", debug = True)
 

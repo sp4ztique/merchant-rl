@@ -1,11 +1,12 @@
 import libtcodpy as libtcod
 
 class Entity():
-	def __init__(self, x, y, char, color):
+	def __init__(self, owner, x, y, char, color):
 		self.x = x
 		self.y = y
 		self.char = char
 		self.color = color
+		self.owner = owner
 
 	def move(self, dx, dy):
 		self.x += dx
@@ -17,3 +18,6 @@ class Entity():
 
 	def clear(self, con):
 		libtcod.console_put_char(con, self.x, self.y, ' ', libtcod.BKGND_NONE)
+
+	def on_click(self):
+		owner.log.message("Entity clicked at (" + str(x) + ", " + str(y) + ")", self.color)
