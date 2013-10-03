@@ -1,6 +1,6 @@
 import libtcodpy as libtcod
 
-class Entity():
+class Entity(object):
 	def __init__(self, owner, x, y, char, color):
 		self.x = x
 		self.y = y
@@ -20,4 +20,8 @@ class Entity():
 		libtcod.console_put_char(con, self.x, self.y, ' ', libtcod.BKGND_NONE)
 
 	def on_click(self):
-		owner.log.message("Entity clicked at (" + str(x) + ", " + str(y) + ")", self.color)
+		self.owner.log.message("Entity clicked at (" + str(self.x) + ", " + str(self.y) + ")", self.color)
+
+class City(Entity):
+	def on_click(self):
+		self.owner.log.message("City clicked at (" + str(self.x) + ", " + str(self.y) + ")", self.color)

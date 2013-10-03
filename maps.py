@@ -1,18 +1,23 @@
 from globalconst import *
 import libtcodpy as libtcod
-import entity
+import entity, sys
 
-class Map:
+class Tile(object):
+	def __init__(self, terrain = "land"):
+		self.terrain = terrain
+		self.owned_by = None
+
+class Map(object):
 	def __init__(self, owner, width = MAP_WIDTH, height = MAP_HEIGHT, gen = True):
 		self.size = self.width, self.height = width, height
 		self.owner = owner
 		self.generated = False
 
+		self.tiles = [[ Tile()
+			for y in range(self.height) ]
+				for x in range(self.width) ]
+
 		self.image = libtcod.image_new(self.width * 2, self.height * 2)
-		for x in range(self.width*2):
-			for y in range(self.height*2):
-				col = libtcod.random_get_int(0, 0, 255)
-				libtcod.image_put_pixel(self.image, x, y, libtcod.Color(col, col, col))
 		
 		if gen:
 			self.generate()
@@ -23,6 +28,10 @@ class Map:
 		heightmap = libtcod.heightmap_new(2*self.width, 2*self.height)
 		maxi = 0
 		mini = 0
+
+		self.tiles = [[ Tile()
+			for y in range(self.height) ]
+				for x in range(self.width) ]
 
 		self.owner.log.message("-- heightmap...", debug = True)
 		for x in range(self.width*2):
@@ -90,6 +99,15 @@ class Map:
 				col = libtcod.image_get_pixel(self.image, x, y) * avg 
 				libtcod.image_put_pixel(self.image, x, y, col)
 
+		self.owner.log.message("-- setting up tiles", debug = True)
+		for x in range(self.width):
+			for y in range(self.height):
+				h = libtcod.heightmap_get_value(self.heightmap, x*2, y*2)
+				if h >= 0.05:
+					self.tiles[x][y].terrain = "land"
+				else:
+					self.tiles[x][y].terrain = "water"
+		self.owner.log.message("Terrain complete", debug = True)
 
 		self.owner.log.message("Placing cities", debug=True)
 
@@ -98,16 +116,29 @@ class Map:
 		max_cities = 10
 		num_cities = 0
 		for i in range(max_cities):
-			x = libtcod.random_get_int(0, 0, self.width)
-			y = libtcod.random_get_int(0, 0, self.height)
-			height = libtcod.heightmap_get_value(self.heightmap, x*2, y*2)
-			if height > 0.1:
-				city = entity.Entity(self.owner, x, y, '#', libtcod.Color(libtcod.random_get_int(0, 0, 255), libtcod.random_get_int(0, 0, 255), libtcod.random_get_int(0, 0, 255)))
+			x = libtcod.random_get_int(0, 0, self.width - 1)
+			y = libtcod.random_get_int(0, 0, self.height - 1)
+			if self.tiles[x][y].terrain == "land":
+				city = entity.City(self.owner, x, y, '#', libtcod.Color(libtcod.random_get_int(0, 0, 255), libtcod.random_get_int(0, 0, 255), libtcod.random_get_int(0, 0, 255)))
 				self.owner.entities.append(city)
 				num_cities += 1
 		self.owner.log.message("-- placed " + str(num_cities) + " cities")
 
 		self.owner.log.message("Map generated", debug = True)
+		self.generated = True
 
-	def draw(self, con):
-		libtcod.image_blit_2x(self.image, con, 0, 0)
+	def draw(self, con, mode):
+		if mode == "normal":
+			libtcod.image_blit_2x(self.image, con, 0, 0)
+		elif mode == "tiles":
+			for x in range(self.width):
+				for y in range(self.height):
+					if self.tiles[x][y].terrain == "land":
+						libtcod.console_set_default_background(con, libtcod.Color(40, 62, 19))
+						libtcod.console_put_char(con, x, y, ' ', libtcod.BKGND_SET)
+					elif self.tiles[x][y].terrain == "water":
+						libtcod.console_set_default_background(con, libtcod.Color(38, 50, 60))
+						libtcod.console_put_char(con, x, y, ' ', libtcod.BKGND_SET)
+		else:
+			print "Invalid drawing mode passed to Map.draw: " + mode
+			sys.exit(1)

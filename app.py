@@ -5,12 +5,13 @@ import entity, maps, log
 
 from globalconst import *
 
-class App:
+class App(object):
 	def __init__(self):
 		self.running  = True
 		self.size     = self.width, self.height = SCREEN_WIDTH, SCREEN_HEIGHT
 		self.con = None
 		self.entities = []
+		self.drawing_mode = "normal"
 
 	def on_init(self):
 		# libtcod intialisation
@@ -43,12 +44,17 @@ class App:
 				keychar = chr(key.c)
 				if keychar == "g" or keychar == "G":
 					self.map.generate()
+				elif keychar == "t" or keychar == "T":
+					self.drawing_mode = "tiles"
+				elif keychar == "n" or keychar == "N":
+					self.drawing_mode = "normal"
 
 		if ev == libtcod.EVENT_MOUSE_PRESS:
 			x = mouse.cx
 			y = mouse.cy
-			normal = libtcod.heightmap_get_normal(self.map.heightmap, x*2, y*2, 0)
-			print normal
+			for entity in self.entities:
+				if entity.x == x and entity.y == y:
+					entity.on_click()
 
 	def on_loop(self):
 		self.on_event()
@@ -60,7 +66,7 @@ class App:
 			for entity in self.entities:
 				entity.clear(self.main_panel)
 		elif flag == "draw":
-			self.map.draw(self.main_panel)
+			self.map.draw(self.main_panel, mode = self.drawing_mode)
 
 			for entity in self.entities:
 				entity.draw(self.main_panel)
