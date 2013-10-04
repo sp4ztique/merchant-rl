@@ -62,11 +62,9 @@ class Map(object):
 					value += 1
 					mini2 = mini + 1
 					coeff = (value - mini2)/(1-mini2)
-					index = int(coeff * 255)
 					libtcod.heightmap_set_value(self.heightmap, x, y, -coeff)
 				else:
 					value = value / maxi
-					index = int(value * 255)
 					libtcod.heightmap_set_value(self.heightmap, x, y, value)
 
 		self.owner.log.message("-- setting up tiles", debug = True)
