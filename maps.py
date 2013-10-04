@@ -52,25 +52,7 @@ class Map(object):
 		# print "-- erode the map"
 		# libtcod.heightmap_rain_erosion(heightmap, self.width*2*self.height*2*2,0.1,0.2)
 
-		deep = libtcod.Color(1, 10, 27)
-		mid = libtcod.Color(38, 50, 60)
-		shallow = libtcod.Color(51, 83, 120)
-		water_idx = [0, 70, 210, 255]
-		water_cols = [deep, deep, mid, shallow]
-		water_colormap = libtcod.color_gen_map(water_cols, water_idx)
-
-
-		mountaintop = libtcod.Color(145, 196, 88)
-		grass = libtcod.Color(40, 62, 19)
-		foothill = libtcod.Color(57, 81, 34)
-		sand = libtcod.Color(215, 185, 115)
-		watersedge = libtcod.Color(19, 97, 101)
-
-		land_idx = [0, 15, 20, 128, 255]
-		land_cols = [watersedge, sand, grass, foothill, mountaintop]
-		land_colormap = libtcod.color_gen_map(land_cols, land_idx)
-
-		self.owner.log.message("-- paint the image and normalize the heights...", debug = True)
+		self.owner.log.message("-- normalize heights...", debug = True)
 		self.heightmap = libtcod.heightmap_new(self.width*2, self.height*2)
 
 		for x in range(self.width*2):
@@ -81,28 +63,11 @@ class Map(object):
 					mini2 = mini + 1
 					coeff = (value - mini2)/(1-mini2)
 					index = int(coeff * 255)
-					libtcod.image_put_pixel(self.image, x, y, water_colormap[index])
 					libtcod.heightmap_set_value(self.heightmap, x, y, -coeff)
 				else:
 					value = value / maxi
 					index = int(value * 255)
-					libtcod.image_put_pixel(self.image, x, y, land_colormap[index])
 					libtcod.heightmap_set_value(self.heightmap, x, y, value)
-
-		self.owner.log.message("-- apply normal shadows", debug = True)
-		for x in range(self.width*2):
-			for y in range(self.height*2):
-				normal = libtcod.heightmap_get_normal(self.heightmap, x, y, 0)
-				nx = normal[0]
-				ny = normal[1]
-				avg = (nx + ny)/2
-				if avg > 0:
-					avg = 1
-				else:
-					avg = avg + 1
-					avg = min(avg/2 + 0.5, 1)
-				col = libtcod.image_get_pixel(self.image, x, y) * avg 
-				libtcod.image_put_pixel(self.image, x, y, col)
 
 		self.owner.log.message("-- setting up tiles", debug = True)
 		for x in range(self.width):
@@ -129,10 +94,17 @@ class Map(object):
 				self.tiles[x][y].temp = value
 
 		temp_max = temp_max - temp_min
-
+		height_factor = 0.5
 		for x in range(self.width):
 			for y in range(self.height):
-				self.tiles[x][y].temp = (self.tiles[x][y].temp - temp_min)/temp_max
+				temp = (self.tiles[x][y].temp - temp_min)/temp_max
+				h = libtcod.heightmap_get_value(self.heightmap, x*2, y*2)
+				if h > 0:
+					factor = (-h)*height_factor
+					temp = temp + factor
+					temp = min(1, temp)
+					temp = max(0, temp)
+				self.tiles[x][y].temp = temp
 
 		self.owner.log.message("-- creating rainfall map", debug = True)
 		noise3 = libtcod.noise_new(2, 0.5, 2.0)
@@ -155,7 +127,62 @@ class Map(object):
 			for y in range(self.height):
 				self.tiles[x][y].rain = (self.tiles[x][y].rain - rain_min)/rain_max
 
+		self.owner.log.message("-- define biomes", debug = True)
+		for x in range(self.width):
+			for y in range(self.height):
+				rain = self.tiles[x][y].rain
+				temp = self.tiles[x][y].temp
+				if temp < 0.05:
+					self.tiles[x][y].biome = "polar"
+				elif temp < 0.15:
+					pass
+
 		self.owner.log.message("Terrain complete", debug = True)
+
+		self.owner.log.message("Painting terrain", debug = True)
+
+		deep = libtcod.Color(1, 10, 27)
+		mid = libtcod.Color(38, 50, 60)
+		shallow = libtcod.Color(51, 83, 120)
+		water_idx = [0, 70, 210, 255]
+		water_cols = [deep, deep, mid, shallow]
+		water_colormap = libtcod.color_gen_map(water_cols, water_idx)
+
+
+		mountaintop = libtcod.Color(145, 196, 88)
+		grass = libtcod.Color(40, 62, 19)
+		foothill = libtcod.Color(57, 81, 34)
+		sand = libtcod.Color(215, 185, 115)
+		watersedge = libtcod.Color(19, 97, 101)
+
+		land_idx = [0, 15, 20, 128, 255]
+		land_cols = [watersedge, sand, grass, foothill, mountaintop]
+		land_colormap = libtcod.color_gen_map(land_cols, land_idx)
+
+		for x in range(self.width*2):
+			for y in range(self.height*2):
+				value = libtcod.heightmap_get_value(self.heightmap, x, y)
+				if value < 0:
+					index = int(-value * 255)
+					libtcod.image_put_pixel(self.image, x, y, water_colormap[index])
+				else:
+					index = int(value * 255)
+					libtcod.image_put_pixel(self.image, x, y, land_colormap[index])
+
+		self.owner.log.message("-- apply normal shadows", debug = True)
+		for x in range(self.width*2):
+			for y in range(self.height*2):
+				normal = libtcod.heightmap_get_normal(self.heightmap, x, y, 0)
+				nx = normal[0]
+				ny = normal[1]
+				avg = (nx + ny)/2
+				if avg > 0:
+					avg = 1
+				else:
+					avg = avg + 1
+					avg = min(avg/2 + 0.5, 1)
+				col = libtcod.image_get_pixel(self.image, x, y) * avg 
+				libtcod.image_put_pixel(self.image, x, y, col)
 
 		self.owner.log.message("Placing cities", debug=True)
 
