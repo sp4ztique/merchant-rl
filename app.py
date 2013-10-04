@@ -29,7 +29,8 @@ class App(object):
 		print "Made by sp4ztique"
 		print ""
 
-		self.map = maps.Map(self)
+		self.map = maps.Map(self, gen=False)
+		self.map.generate()
 
 		self.running = True		
 
@@ -55,7 +56,6 @@ class App(object):
 		if ev == libtcod.EVENT_MOUSE_PRESS:
 			x = mouse.cx
 			y = mouse.cy
-			print libtcod.heightmap_get_value(self.map.heightmap, x*2, y*2)
 			for entity in self.entities:
 				if entity.x == x and entity.y == y:
 					entity.on_click()

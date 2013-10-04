@@ -196,9 +196,9 @@ class Map(object):
 
 		self.owner.entities = []
 
-		max_cities = 10
+		max_cities = 30
 		num_cities = 0
-		for i in range(max_cities):
+		while num_cities < max_cities:
 			x = libtcod.random_get_int(0, 0, self.width - 1)
 			y = libtcod.random_get_int(0, 0, self.height - 1)
 			if self.tiles[x][y].terrain == "land":
