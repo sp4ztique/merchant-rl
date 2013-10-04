@@ -3,7 +3,7 @@ import libtcodpy as libtcod
 
 from globalconst import *
 
-class Log:
+class Log(object):
 	def __init__(self, owner):
 		self.messages = []
 		self.history = []
