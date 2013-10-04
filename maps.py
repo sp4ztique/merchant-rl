@@ -9,6 +9,8 @@ class Tile(object):
 		self.char = None
 		self.fg_color = None
 		self.info = "No info available"
+		self.temp = 0
+		self.rain = 0
 
 class Map(object):
 	def __init__(self, owner, width = MAP_WIDTH, height = MAP_HEIGHT, gen = True):
@@ -36,7 +38,7 @@ class Map(object):
 			for y in range(self.height) ]
 				for x in range(self.width) ]
 
-		self.owner.log.message("-- heightmap...", debug = True)
+		self.owner.log.message("-- creating heightmap...", debug = True)
 		for x in range(self.width*2):
 			for y in range(self.height*2):
 				f = [3 * float(x) / (2*self.width), 3 * float(y) / (2*self.height)]
@@ -111,18 +113,48 @@ class Map(object):
 				else:
 					self.tiles[x][y].terrain = "water"
 
-		self.owner.log.message("-- placing forests", debug = True)
+		self.owner.log.message("-- creating temperature map", debug = True)
 		noise2 = libtcod.noise_new(2, 0.5, 2.0)
+		temp_max = 0
+		temp_min = 1
 		for x in range(self.width):
 			for y in range(self.height):
-				f = [3 * float(x) / (self.width), 3 * float(y) / (self.height)]
-				value = (libtcod.noise_get_fbm(noise2, f, 5, libtcod.NOISE_PERLIN))/2
-				if value > 0:
-					h = libtcod.heightmap_get_value(self.heightmap, x*2, y*2)
-					if h > 0.05:
-						self.tiles[x][y].char = libtcod.random_get_int(0, 5, 6)
-						self.tiles[x][y].info = "Forest"
-						self.tiles[x][y].fg_color = libtcod.yellow					
+		 		f = [3 * float(x) / (self.width), 3 * float(y) / (self.height)]
+	 			value = (libtcod.noise_get_fbm(noise2, f, 5, libtcod.NOISE_PERLIN))/2
+	 			value = (value + 1)/2
+	 			if value < temp_min:
+	 				temp_min = value
+	 			if value > temp_max:
+	 				temp_max = value
+				self.tiles[x][y].temp = value
+
+		temp_max = temp_max - temp_min
+
+		for x in range(self.width):
+			for y in range(self.height):
+				self.tiles[x][y].temp = (self.tiles[x][y].temp - temp_min)/temp_max
+
+		self.owner.log.message("-- creating rainfall map", debug = True)
+		noise3 = libtcod.noise_new(2, 0.5, 2.0)
+		rain_max = 0
+		rain_min = 1
+		for x in range(self.width):
+			for y in range(self.height):
+		 		f = [3 * float(x) / (self.width), 3 * float(y) / (self.height)]
+	 			value = (libtcod.noise_get_fbm(noise3, f, 5, libtcod.NOISE_PERLIN))/2
+	 			value = (value + 1)/2
+	 			if value < rain_min:
+	 				rain_min = value
+	 			if value > rain_max:
+	 				rain_max = value
+				self.tiles[x][y].rain = value
+
+		rain_max = rain_max - rain_min
+
+		for x in range(self.width):
+			for y in range(self.height):
+				self.tiles[x][y].rain = (self.tiles[x][y].rain - rain_min)/rain_max
+
 		self.owner.log.message("Terrain complete", debug = True)
 
 		self.owner.log.message("Placing cities", debug=True)
@@ -161,6 +193,22 @@ class Map(object):
 					elif self.tiles[x][y].terrain == "water":
 						libtcod.console_set_default_background(con, libtcod.Color(38, 50, 60))
 						libtcod.console_put_char(con, x, y, ' ', libtcod.BKGND_SET)
+		elif mode == "temps":
+			cols = [libtcod.green, libtcod.yellow, libtcod.red]
+			col_idx = [0, 50, 100]
+			col_map = libtcod.color_gen_map(cols, col_idx)
+			for x in range(self.width):
+				for y in range(self.height):
+					libtcod.console_set_default_foreground(con, col_map[int(self.tiles[x][y].temp*100)])
+					libtcod.console_put_char(con, x, y, 'o', libtcod.BKGND_NONE)
+		elif mode == "rain":
+			cols = [libtcod.yellow, libtcod.green, libtcod.blue]
+			col_idx = [0, 50, 100]
+			col_map = libtcod.color_gen_map(cols, col_idx)
+			for x in range(self.width):
+				for y in range(self.height):
+					libtcod.console_set_default_foreground(con, col_map[int(self.tiles[x][y].rain*100)])
+					libtcod.console_put_char(con, x, y, 'o', libtcod.BKGND_NONE)
 		else:
 			print "Invalid drawing mode passed to Map.draw: " + mode
 			sys.exit(1)

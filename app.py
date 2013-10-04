@@ -48,10 +48,14 @@ class App(object):
 					self.drawing_mode = "tiles"
 				elif keychar == "n" or keychar == "N":
 					self.drawing_mode = "normal"
-
+				elif keychar == "h" or keychar == "H":
+					self.drawing_mode = "temps"
+				elif keychar == "r" or keychar == "R":
+					self.drawing_mode = "rain"
 		if ev == libtcod.EVENT_MOUSE_PRESS:
 			x = mouse.cx
 			y = mouse.cy
+			print self.map.tiles[x][y].temp
 			for entity in self.entities:
 				if entity.x == x and entity.y == y:
 					entity.on_click()
