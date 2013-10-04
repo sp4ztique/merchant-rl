@@ -78,64 +78,57 @@ class Map(object):
 				else:
 					self.tiles[x][y].terrain = "water"
 
-		self.owner.log.message("-- creating temperature map", debug = True)
-		noise2 = libtcod.noise_new(2, 0.5, 2.0)
-		temp_max = 0
-		temp_min = 1
-		for x in range(self.width):
-			for y in range(self.height):
-		 		f = [3 * float(x) / (self.width), 3 * float(y) / (self.height)]
-	 			value = (libtcod.noise_get_fbm(noise2, f, 5, libtcod.NOISE_PERLIN))/2
-	 			value = (value + 1)/2
-	 			if value < temp_min:
-	 				temp_min = value
-	 			if value > temp_max:
-	 				temp_max = value
-				self.tiles[x][y].temp = value
+		# self.owner.log.message("-- creating temperature map", debug = True)
+		# noise2 = libtcod.noise_new(2, 0.5, 2.0)
+		# temp_max = 0
+		# temp_min = 1
+		# for x in range(self.width):
+		# 	for y in range(self.height):
+		#  		f = [3 * float(x) / (self.width), 3 * float(y) / (self.height)]
+	 # 			value = (libtcod.noise_get_fbm(noise2, f, 5, libtcod.NOISE_PERLIN))/2
+	 # 			value = (value + 1)/2
+	 # 			if value < temp_min:
+	 # 				temp_min = value
+	 # 			if value > temp_max:
+	 # 				temp_max = value
+		# 		self.tiles[x][y].temp = value
 
-		temp_max = temp_max - temp_min
-		height_factor = 0.5
-		for x in range(self.width):
-			for y in range(self.height):
-				temp = (self.tiles[x][y].temp - temp_min)/temp_max
-				h = libtcod.heightmap_get_value(self.heightmap, x*2, y*2)
-				if h > 0:
-					factor = (-h)*height_factor
-					temp = temp + factor
-					temp = min(1, temp)
-					temp = max(0, temp)
-				self.tiles[x][y].temp = temp
+		# temp_max = temp_max - temp_min
+		# height_factor = 0.5
+		# for x in range(self.width):
+		# 	for y in range(self.height):
+		# 		temp = (self.tiles[x][y].temp - temp_min)/temp_max
+		# 		h = libtcod.heightmap_get_value(self.heightmap, x*2, y*2)
+		# 		if h > 0:
+		# 			factor = (-h)*height_factor
+		# 			temp = temp + factor
+		# 			temp = min(1, temp)
+		# 			temp = max(0, temp)
+		# 		self.tiles[x][y].temp = temp
 
 		self.owner.log.message("-- creating rainfall map", debug = True)
 		noise3 = libtcod.noise_new(2, 0.5, 2.0)
+		self.rainmap = libtcod.heightmap_new(self.width*2, self.height*2)
 		rain_max = 0
 		rain_min = 1
-		for x in range(self.width):
-			for y in range(self.height):
-		 		f = [3 * float(x) / (self.width), 3 * float(y) / (self.height)]
+		for x in range(self.width*2):
+			for y in range(self.height*2):
+		 		f = [5 * float(x) / (self.width*2), 5 * float(y) / (self.height*2)]
 	 			value = (libtcod.noise_get_fbm(noise3, f, 5, libtcod.NOISE_PERLIN))/2
 	 			value = (value + 1)/2
 	 			if value < rain_min:
 	 				rain_min = value
 	 			if value > rain_max:
 	 				rain_max = value
-				self.tiles[x][y].rain = value
+				self.tiles[x/2][y/2].rain = value
+				libtcod.heightmap_set_value(self.rainmap, x, y, value)
 
 		rain_max = rain_max - rain_min
 
-		for x in range(self.width):
-			for y in range(self.height):
-				self.tiles[x][y].rain = (self.tiles[x][y].rain - rain_min)/rain_max
-
-		self.owner.log.message("-- define biomes", debug = True)
-		for x in range(self.width):
-			for y in range(self.height):
-				rain = self.tiles[x][y].rain
-				temp = self.tiles[x][y].temp
-				if temp < 0.05:
-					self.tiles[x][y].biome = "polar"
-				elif temp < 0.15:
-					pass
+		for x in range(self.width*2):
+			for y in range(self.height*2):
+				libtcod.heightmap_set_value(self.rainmap, x, y, (libtcod.heightmap_get_value(self.rainmap, x, y) - rain_min)/rain_max)
+				self.tiles[x/2][y/2].rain = (self.tiles[x/2][y/2].rain - rain_min)/rain_max
 
 		self.owner.log.message("Terrain complete", debug = True)
 
@@ -148,7 +141,6 @@ class Map(object):
 		water_cols = [deep, deep, mid, shallow]
 		water_colormap = libtcod.color_gen_map(water_cols, water_idx)
 
-
 		mountaintop = libtcod.Color(145, 196, 88)
 		grass = libtcod.Color(40, 62, 19)
 		foothill = libtcod.Color(57, 81, 34)
@@ -159,6 +151,7 @@ class Map(object):
 		land_cols = [watersedge, sand, grass, foothill, mountaintop]
 		land_colormap = libtcod.color_gen_map(land_cols, land_idx)
 
+		# Apply height-based colours
 		for x in range(self.width*2):
 			for y in range(self.height*2):
 				value = libtcod.heightmap_get_value(self.heightmap, x, y)
@@ -168,6 +161,23 @@ class Map(object):
 				else:
 					index = int(value * 255)
 					libtcod.image_put_pixel(self.image, x, y, land_colormap[index])
+
+		# Adjust colours for desert-plains-forest
+		for x in range(self.width*2):
+			for y in range(self.height*2):
+				if libtcod.heightmap_get_value(self.heightmap, x, y) > 0:
+					rain = libtcod.heightmap_get_value(self.rainmap, x, y)
+					cur_col = libtcod.image_get_pixel(self.image, x, y)
+					cols = [libtcod.light_sepia, cur_col, cur_col, cur_col * 0.7,cur_col*0.6]
+					col_idx = [0, 100, 155, 170, 255]
+					col_map = libtcod.color_gen_map(cols, col_idx)
+					index = int(rain*255)
+					if index > 155 and libtcod.heightmap_get_value(self.heightmap, x, y) > 0.15:
+						self.tiles[x/2][y/2].biome = "forest"
+						self.tiles[x/2][y/2].char = 'T'
+						self.tiles[x/2][y/2].fg_color = libtcod.darker_chartreuse * 0.6
+
+					libtcod.image_put_pixel(self.image, x, y, col_map[index])
 
 		self.owner.log.message("-- apply normal shadows", debug = True)
 		for x in range(self.width*2):
