@@ -168,14 +168,14 @@ class Map(object):
 				if libtcod.heightmap_get_value(self.heightmap, x, y) > 0:
 					rain = libtcod.heightmap_get_value(self.rainmap, x, y)
 					cur_col = libtcod.image_get_pixel(self.image, x, y)
-					cols = [libtcod.light_sepia, cur_col, cur_col, cur_col * 0.7,cur_col*0.6]
-					col_idx = [0, 100, 155, 170, 255]
+					cols = [libtcod.light_sepia, cur_col, cur_col, cur_col * 1.1]
+					col_idx = [0, 100, 165, 255]
 					col_map = libtcod.color_gen_map(cols, col_idx)
 					index = int(rain*255)
-					if index > 155 and libtcod.heightmap_get_value(self.heightmap, x, y) > 0.15:
+					if index > 165 and libtcod.heightmap_get_value(self.heightmap, x, y) > 0.15:
 						self.tiles[x/2][y/2].biome = "forest"
 						self.tiles[x/2][y/2].char = 'T'
-						self.tiles[x/2][y/2].fg_color = libtcod.darker_chartreuse * 0.6
+						self.tiles[x/2][y/2].fg_color = grass * 0.7
 
 					libtcod.image_put_pixel(self.image, x, y, col_map[index])
 
