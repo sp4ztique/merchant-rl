@@ -1,4 +1,6 @@
 import libtcodpy as libtcod
+import math
+from globalconst import *
 
 class Entity(object):
 	def __init__(self, owner, x, y, char, color):
@@ -37,12 +39,19 @@ class City(Entity):
 		self.is_coastal = False
 
 		# Check if near coast
-		# tiles = owner.map.tiles
-		# if tiles[x+1][y].terrain == "water":
-		# 	self.is_coastal = True
-		# elif tiles[x-1][y].terrain == "water":
-		# 	self.is_coastal = True
-		# elif tiles[x][y+1].terrain == "water":
-		# 	self.is_coastal = True
-		# elif tiles[x][y-1].terrain == "water":
-		# 	self.is_coastal = True
+		tiles = owner.map.tiles
+		radius = 2
+		for x in range(-radius, radius):
+			for y in range(-radius, radius):
+				dist = math.sqrt(x ** 2 + y ** 2)
+				if dist > radius:
+					break
+
+				ter = self.owner.map.tiles[self.x - x][self.y - y].terrain
+
+				if ter == "water":
+					self.is_coastal = True
+
+	def draw(self, con):
+		libtcod.console_set_default_foreground(con, self.color)
+		libtcod.console_put_char(con, self.x, self.y, self.char, libtcod.BKGND_NONE)

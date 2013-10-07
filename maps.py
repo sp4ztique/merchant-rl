@@ -194,11 +194,11 @@ class Map(object):
 
 		self.owner.entities = []
 
-		max_cities = 30
+		max_cities = 15
 		num_cities = 0
 		while num_cities < max_cities:
-			x = libtcod.random_get_int(0, 0, self.width - 1)
-			y = libtcod.random_get_int(0, 0, self.height - 1)
+			x = libtcod.random_get_int(0, 2, self.width - 3)
+			y = libtcod.random_get_int(0, 2, self.height - 3)
 			if self.tiles[x][y].terrain == "land":
 				city = entity.City(self.owner, x, y, '#', libtcod.Color(libtcod.random_get_int(0, 0, 255), libtcod.random_get_int(0, 0, 255), libtcod.random_get_int(0, 0, 255)))
 				self.owner.entities.append(city)
