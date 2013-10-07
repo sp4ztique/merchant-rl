@@ -36,6 +36,8 @@ class City(Entity):
 		self.color = color
 		self.owner = owner
 
+		self.agents = []
+
 		self.is_coastal = False
 
 		# Check if near coast
