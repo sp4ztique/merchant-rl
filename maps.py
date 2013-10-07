@@ -1,6 +1,6 @@
 from globalconst import *
 import libtcodpy as libtcod
-import entity, sys
+import entity, sys, math
 
 class Tile(object):
 	def __init__(self, terrain = "land"):
@@ -58,11 +58,9 @@ class Map(object):
 		for x in range(self.width*2):
 			for y in range(self.height*2):
 				value = libtcod.heightmap_get_value(heightmap, x, y)
-				if value < 0:
-					value += 1
-					mini2 = mini + 1
-					coeff = (value - mini2)/(1-mini2)
-					libtcod.heightmap_set_value(self.heightmap, x, y, -coeff)
+				if value < 0.0:
+					value = -(value / mini)
+					libtcod.heightmap_set_value(self.heightmap, x, y, value)
 				else:
 					value = value / maxi
 					libtcod.heightmap_set_value(self.heightmap, x, y, value)
@@ -135,8 +133,8 @@ class Map(object):
 		deep = libtcod.Color(1, 10, 27)
 		mid = libtcod.Color(38, 50, 60)
 		shallow = libtcod.Color(51, 83, 120)
-		water_idx = [0, 70, 210, 255]
-		water_cols = [deep, deep, mid, shallow]
+		water_idx = [0, 45, 185, 255]
+		water_cols = [shallow, mid, deep, deep]
 		water_colormap = libtcod.color_gen_map(water_cols, water_idx)
 
 		mountaintop = libtcod.Color(145, 196, 88)
@@ -196,11 +194,11 @@ class Map(object):
 
 		self.owner.entities = []
 
-		max_cities = 10
+		max_cities = 15
 		num_cities = 0
-		for i in range(max_cities):
-			x = libtcod.random_get_int(0, 0, self.width - 1)
-			y = libtcod.random_get_int(0, 0, self.height - 1)
+		while num_cities < max_cities:
+			x = libtcod.random_get_int(0, 2, self.width - 3)
+			y = libtcod.random_get_int(0, 2, self.height - 3)
 			if self.tiles[x][y].terrain == "land":
 				city = entity.City(self.owner, x, y, '#', libtcod.Color(libtcod.random_get_int(0, 0, 255), libtcod.random_get_int(0, 0, 255), libtcod.random_get_int(0, 0, 255)))
 				self.owner.entities.append(city)

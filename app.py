@@ -12,6 +12,7 @@ class App(object):
 		self.con = None
 		self.entities = []
 		self.drawing_mode = "normal"
+		self.screen = "main_game"
 
 	def on_init(self):
 		# libtcod intialisation
@@ -29,7 +30,8 @@ class App(object):
 		print "Made by sp4ztique"
 		print ""
 
-		self.map = maps.Map(self)
+		self.map = maps.Map(self, gen=False)
+		self.map.generate()
 
 		self.running = True		
 
@@ -44,18 +46,9 @@ class App(object):
 				keychar = chr(key.c)
 				if keychar == "g" or keychar == "G":
 					self.map.generate()
-				elif keychar == "t" or keychar == "T":
-					self.drawing_mode = "tiles"
-				elif keychar == "n" or keychar == "N":
-					self.drawing_mode = "normal"
-				elif keychar == "h" or keychar == "H":
-					self.drawing_mode = "temps"
-				elif keychar == "r" or keychar == "R":
-					self.drawing_mode = "rain"
 		if ev == libtcod.EVENT_MOUSE_PRESS:
 			x = mouse.cx
 			y = mouse.cy
-			print libtcod.heightmap_get_value(self.map.heightmap, x*2, y*2)
 			for entity in self.entities:
 				if entity.x == x and entity.y == y:
 					entity.on_click()
@@ -70,16 +63,17 @@ class App(object):
 			for entity in self.entities:
 				entity.clear(self.main_panel)
 		elif flag == "draw":
-			self.map.draw(self.main_panel, mode = self.drawing_mode)
+			if self.screen == "main_game":
+				self.map.draw(self.main_panel, mode = self.drawing_mode)
 
-			for entity in self.entities:
-				entity.draw(self.main_panel)
+				for entity in self.entities:
+					entity.draw(self.main_panel)
 
-			self.log.draw(self.bottom_panel)
+				self.log.draw(self.bottom_panel)
 
-			libtcod.console_blit(self.main_panel, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
-			libtcod.console_blit(self.bottom_panel, 0, 0, self.width, BOTTOM_PANEL_HEIGHT, 0, 0, MAP_HEIGHT)
-			libtcod.console_flush()
+				libtcod.console_blit(self.main_panel, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
+				libtcod.console_blit(self.bottom_panel, 0, 0, self.width, BOTTOM_PANEL_HEIGHT, 0, 0, MAP_HEIGHT)
+				libtcod.console_flush()
 		else:
 			print "Invalid flag passed to App.on_render: " + flag
 			running = False
