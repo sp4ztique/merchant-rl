@@ -56,6 +56,7 @@ class App(object):
 		if ev == libtcod.EVENT_MOUSE_PRESS:
 			x = mouse.cx
 			y = mouse.cy
+			self.log.message(str(libtcod.heightmap_get_value(self.map.heightmap, x*2, y*2)))
 			for entity in self.entities:
 				if entity.x == x and entity.y == y:
 					entity.on_click()
